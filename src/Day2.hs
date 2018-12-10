@@ -39,7 +39,7 @@ offByOne input = findOffByOne ids ids where
         else text
     common w1 w2 = foldl gatherSameLetters "" (T.zip w1 w2)
     findOffByOne [] _ = "Not found"
-    findOffByOne (w1:rest) ids = go
+    findOffByOne (w1:rest) ids =
         case find (\w2 -> T.length w1 - T.length ( common w1 w2 ) == 1) ids of
             Just w2 -> common w1 w2
             Nothing -> findOffByOne rest ids
