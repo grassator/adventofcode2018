@@ -2,6 +2,7 @@ module Main where
 
 import qualified Day1
 import qualified Day2
+import qualified Day3
 import qualified Data.Text.IO as TIO
 import System.Environment (getArgs)
 
@@ -20,3 +21,6 @@ main = do
             text <- TIO.readFile "./data/day2.txt"
             putStrLn $ "1: " ++ ( show ( Day2.checksum text ) )
             putStrLn $ "2: " ++ ( show ( Day2.offByOne text ) )
+        "3":_ -> do
+            text <- TIO.readFile "./data/day3.txt"
+            putStrLn $ "1: " ++ ( show ( Day3.findOverlapping text ) )
