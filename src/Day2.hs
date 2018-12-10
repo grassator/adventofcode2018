@@ -1,18 +1,20 @@
 module Day2
     ( checksum
+    , offByOne
     ) where
 
 import qualified Data.Text as T
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
+import Data.Foldable (find)
 
 checksum :: T.Text -> Int
 checksum input =
     let
         updateMap seen el =
-            Map.alter alter el seen where
-                alter (Just value) = Just $ value + 1
-                alter Nothing = Just 1
+            Map.alter update el seen where
+                update (Just value) = Just $ value + 1
+                update Nothing = Just 1
         count ids =
             let
                 go (double, triple) id =
@@ -27,3 +29,17 @@ checksum input =
         (double, triple) = count $ T.lines input
     in
         double * triple
+
+offByOne :: T.Text -> T.Text
+offByOne input = findOffByOne ids ids where
+    ids = T.lines input
+    gatherSameLetters text (c1, c2) =
+        if c1 == c2
+        then T.snoc text c1
+        else text
+    common w1 w2 = foldl gatherSameLetters "" (T.zip w1 w2)
+    findOffByOne [] _ = "Not found"
+    findOffByOne (w1:rest) ids = go
+        case find (\w2 -> T.length w1 - T.length ( common w1 w2 ) == 1) ids of
+            Just w2 -> common w1 w2
+            Nothing -> findOffByOne rest ids

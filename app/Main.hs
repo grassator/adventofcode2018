@@ -19,3 +19,4 @@ main = do
         "2":_ -> do
             text <- TIO.readFile "./data/day2.txt"
             putStrLn $ "1: " ++ ( show ( Day2.checksum text ) )
+            putStrLn $ "2: " ++ ( show ( Day2.offByOne text ) )
