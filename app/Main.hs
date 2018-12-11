@@ -23,4 +23,5 @@ main = do
             putStrLn $ "2: " ++ ( show ( Day2.offByOne text ) )
         "3":_ -> do
             text <- TIO.readFile "./data/day3.txt"
-            putStrLn $ "1: " ++ ( show ( Day3.findOverlapping text ) )
+            putStrLn $ "1: " ++ ( show ( Day3.countOverlapping text ) )
+            putStrLn $ "2: " ++ ( show ( Day3.findNonOverlapping text ) )

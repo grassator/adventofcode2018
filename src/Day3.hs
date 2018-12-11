@@ -3,7 +3,8 @@
 {-# LANGUAGE TupleSections #-}
 
 module Day3
-    ( findOverlapping
+    ( countOverlapping
+    , findNonOverlapping
     ) where
 
 import qualified Data.Text as T
@@ -12,6 +13,8 @@ import Text.Parsec.Text (Parser)
 import Control.Monad (void)
 import qualified Data.Map.Strict as Map
 import Debug.Trace (trace)
+import Data.Maybe (fromMaybe)
+import Data.List (find)
 
 data Area = Area
     { areaId :: Int
@@ -37,25 +40,24 @@ parser = do
 line :: Parser Area
 line = do
     void $ char '#'
-    identifier <- num
+    areaId <- num
     void $ string " @ "
-    x <- num
+    areaX <- num
     void $ char ','
-    y <- num
+    areaY <- num
     void $ string ": "
-    width <- num
+    areaWidth <- num
     void $ char 'x'
-    height <- num
+    areaHeight <- num
     void $ char '\n'
-    return $ Area
-        { areaId = identifier
-        , areaX = x
-        , areaY = y
-        , areaWidth = width
-        , areaHeight = height
-        }
+    return $ Area {..}
 
 type ClothMap = Map.Map (Int, Int) Int
+
+coords :: Area -> [(Int, Int)]
+coords (Area {..}) = concatMap
+    (\x -> fmap (x,) [areaY..(areaY + areaHeight - 1)])
+    [areaX..(areaX + areaWidth - 1)]
 
 markOverlaps :: [Area] -> ClothMap
 markOverlaps areaList = foldl mark Map.empty areaList where
@@ -63,14 +65,22 @@ markOverlaps areaList = foldl mark Map.empty areaList where
         Map.alter update point markMap where
             update Nothing = Just 0
             update _ = Just 1
-    mark markMap (Area {..}) = foldl updateMap markMap coords where
-        coords = concatMap (\x -> fmap (x,) [areaY..(areaY + areaHeight - 1)]) [areaX..(areaX + areaWidth - 1)]
+    mark markMap area = foldl updateMap markMap ( coords area )
 
 parseAndProcessAreas :: ([Area] -> Int) -> T.Text -> Int
 parseAndProcessAreas process input =
     case parse parser "" input of
         Right areaList -> process areaList
         Left err -> trace (show err) 0
-        
-findOverlapping :: T.Text -> Int
-findOverlapping = parseAndProcessAreas $ Map.foldr' (+) 0 . markOverlaps
+
+countOverlapping :: T.Text -> Int
+countOverlapping = parseAndProcessAreas $ Map.foldr' (+) 0 . markOverlaps
+
+findNonOverlapping :: T.Text -> Int
+findNonOverlapping input = parseAndProcessAreas go input where
+    go areaList = fromMaybe 0 $ fmap areaId found where
+        markMap = markOverlaps areaList
+        found :: Maybe Area
+        found = find ( nonOverapping . coords ) areaList
+        nonOverapping points = all areZero points where
+            areZero point = ( fromMaybe 0 $ Map.lookup point markMap ) == 0
