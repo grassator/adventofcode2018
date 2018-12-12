@@ -25,7 +25,7 @@ main = do
         "1":_ -> run "1" Day1.calibrate Day1.findRepeating
         "2":_ -> run "2" Day2.checksum Day2.offByOne
         "3":_ -> run "3" Day3.countOverlapping Day3.findNonOverlapping
-        "4":_ -> run "4" Day4.mostSleeping notImplemented
+        "4":_ -> run "4" Day4.mostSleeping Day4.mostFrequentMinute
         _ -> do
             putStrLn "Please select a day, e.g:"
             putStrLn "  adventofcode 1"

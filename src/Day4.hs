@@ -3,6 +3,7 @@
 
 module Day4
     ( mostSleeping
+    , mostFrequentMinute
     ) where
 
 import qualified Data.Text as T
@@ -22,9 +23,10 @@ import Text.Parsec
     )
 import Text.Parsec.Text (Parser)
 import Control.Monad (void)
-import Data.List (sort, sortBy)
+import Data.List (sort)
 import Debug.Trace (trace)
 import qualified Data.Map.Strict as Map
+import Data.Maybe (fromMaybe)
 
 num :: Parser Int
 num = do
@@ -80,9 +82,11 @@ data GuardDuty = GuardDuty
 
 type MinuteMap = Map.Map Int Int
 
+minuteListFromRanges :: [Range] -> [Int]
+minuteListFromRanges = concatMap (\(start, end) -> [start..(end - 1)])
+
 minuteList :: GuardDuty -> [Int]
-minuteList (GuardDuty { sleeps }) =
-    concatMap (\(start, end) -> [start..(end - 1)]) sleeps
+minuteList (GuardDuty { sleeps }) = minuteListFromRanges sleeps
 
 markSleeps :: [GuardDuty] -> MinuteMap
 markSleeps dutyList = foldl mark Map.empty dutyList where
@@ -92,17 +96,19 @@ markSleeps dutyList = foldl mark Map.empty dutyList where
             update (Just value) = Just $ value + 1
     mark sleepMap duty = foldl updateMap sleepMap ( minuteList duty )
 
-
 type GuardMap = Map.Map Int Int
+type RangeMap = Map.Map Int [Range]
 
-durationById :: [GuardDuty] -> GuardMap
-durationById dutyList = foldl updateMap Map.empty dutyList where
-    sumSleep sleeps = foldl (+) 0 $ (\(x, y) -> y - x) <$> sleeps
+rangesById :: [GuardDuty] -> RangeMap
+rangesById dutyList = foldl updateMap Map.empty dutyList where
     updateMap guardMap (GuardDuty { .. }) =
         Map.alter update guardId guardMap where
-            update Nothing = Just $ sumSleep sleeps
-            update (Just value) = Just $ value + (sumSleep sleeps)
+            update Nothing = Just $ sleeps
+            update (Just value) = Just $ value ++ sleeps
 
+durationById :: [GuardDuty] -> GuardMap
+durationById m = Map.map sumRanges $ rangesById m where
+    sumRanges = foldl (+) 0 . fmap (\(x, y) -> y - x)
 
 getMaxFromMap :: Ord v => Map.Map k v -> Maybe (k,v)
 getMaxFromMap m = go Nothing (Map.toList m) where
@@ -126,3 +132,26 @@ mostSleeping input = bestId * mostSleptMinute where
     bestId = maxOrZero $ durationById dutyList
     sleepMap = markSleeps $ filter (\(GuardDuty { guardId }) -> guardId == bestId ) dutyList
     mostSleptMinute = maxOrZero sleepMap
+
+
+sleepMapFromRanges :: [Range] -> MinuteMap
+sleepMapFromRanges sleeps = foldl updateMap Map.empty ( minuteListFromRanges sleeps ) where
+    updateMap sleepMap minute =
+        Map.alter update minute sleepMap where
+            update Nothing = Just 0
+            update (Just value) = Just $ value + 1
+
+mostFrequentMinute :: T.Text -> Int
+mostFrequentMinute input = theId * theMinute where
+    sorted = T.intercalate "\n" $ sort ( T.lines input )
+    dutyList = case parse parser "day4.txt" sorted of
+        Right list -> list
+        Left err -> trace ( show err ) []
+    rangesMap = rangesById dutyList
+    minuteMapMap = Map.map sleepMapFromRanges rangesMap where
+    minuteMap = Map.map rangesToMinutes minuteMapMap where
+        rangesToMinutes m = case getMaxFromMap m of
+            Just (_, v) -> v
+            Nothing -> 0
+    theId = maxOrZero ( trace ( show minuteMap ) minuteMap )
+    theMinute = maxOrZero ( fromMaybe Map.empty ( Map.lookup theId minuteMapMap ) )
