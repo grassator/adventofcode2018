@@ -20,6 +20,7 @@ library
                        Day2
                        Day3
                        Day4
+                       Day5
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , text

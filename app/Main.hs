@@ -4,6 +4,7 @@ import qualified Day1
 import qualified Day2
 import qualified Day3
 import qualified Day4
+import qualified Day5
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import System.Environment (getArgs)
@@ -26,6 +27,7 @@ main = do
         "2":_ -> run "2" Day2.checksum Day2.offByOne
         "3":_ -> run "3" Day3.countOverlapping Day3.findNonOverlapping
         "4":_ -> run "4" Day4.mostSleeping Day4.mostFrequentMinute
+        "5":_ -> run "5" Day5.react notImplemented
         _ -> do
             putStrLn "Please select a day, e.g:"
             putStrLn "  adventofcode 1"
