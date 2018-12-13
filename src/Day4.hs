@@ -34,15 +34,8 @@ parser = many duty <* eof
 
 timestamp :: Parser Int
 timestamp = do
-    void $ char '['
-    void num
-    void $ char '-'
-    month <- num
-    void $ char '-'
-    day <- num
-    void $ char ' '
-    void num
-    void $ char ':'
+    void $ char '[' >> num >> char '-' >> num >> char '-' >> num
+        >> char ' ' >> num >> char ':'
     minute <- num
     void $ string "] "
     return minute
