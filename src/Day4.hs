@@ -10,14 +10,11 @@ import qualified Data.Text as T
 import Text.Parsec
     ( many
     , many1
-    , manyTill
     , digit
     , eof
     , char
     , parse
     , string
-    , anyChar
-    , choice
     , try
     , optional
     )
@@ -29,15 +26,10 @@ import qualified Data.Map.Strict as Map
 import Data.Maybe (fromMaybe)
 
 num :: Parser Int
-num = do
-    n <- many1 digit
-    return (read n)
+num = read <$> many1 digit
 
 parser :: Parser [GuardDuty]
-parser = do
-    result <- many duty
-    eof
-    return result
+parser = many duty <* eof
 
 timestamp :: Parser Int
 timestamp = do
@@ -153,5 +145,5 @@ mostFrequentMinute input = theId * theMinute where
         rangesToMinutes m = case getMaxFromMap m of
             Just (_, v) -> v
             Nothing -> 0
-    theId = maxOrZero ( trace ( show minuteMap ) minuteMap )
+    theId = maxOrZero minuteMap
     theMinute = maxOrZero ( fromMaybe Map.empty ( Map.lookup theId minuteMapMap ) )
