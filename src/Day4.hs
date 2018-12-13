@@ -1,5 +1,6 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Day4
     ( mostSleeping
@@ -77,26 +78,23 @@ type MinuteMap = Map.Map Int Int
 minuteListFromRanges :: [Range] -> [Int]
 minuteListFromRanges = concatMap (\(start, end) -> [start..(end - 1)])
 
-minuteList :: GuardDuty -> [Int]
-minuteList (GuardDuty { sleeps }) = minuteListFromRanges sleeps
+aggregateBy :: (Ord k) => (a -> k) -> (Maybe b -> a -> b) -> [a] -> Map.Map k b
+aggregateBy getKey update list = foldl go Map.empty list where
+    go aMap x = Map.alter (\value -> Just $ update value x) (getKey x) aMap
 
 markSleeps :: [GuardDuty] -> MinuteMap
-markSleeps dutyList = foldl mark Map.empty dutyList where
-    updateMap sleepMap point =
-        Map.alter update point sleepMap where
-            update Nothing = Just 0
-            update (Just value) = Just $ value + 1
-    mark sleepMap duty = foldl updateMap sleepMap ( minuteList duty )
+markSleeps = go . concatMap ( minuteListFromRanges . sleeps ) where
+    go = aggregateBy id $ const . \case
+        Nothing -> 0
+        Just value -> value + 1
 
 type GuardMap = Map.Map Int Int
 type RangeMap = Map.Map Int [Range]
 
 rangesById :: [GuardDuty] -> RangeMap
-rangesById dutyList = foldl updateMap Map.empty dutyList where
-    updateMap guardMap (GuardDuty { .. }) =
-        Map.alter update guardId guardMap where
-            update Nothing = Just $ sleeps
-            update (Just value) = Just $ value ++ sleeps
+rangesById = aggregateBy guardId $ \case
+        Nothing -> sleeps
+        Just value -> (++) value . sleeps
 
 durationById :: [GuardDuty] -> GuardMap
 durationById m = Map.map sumRanges $ rangesById m where
